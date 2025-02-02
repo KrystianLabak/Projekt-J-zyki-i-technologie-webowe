@@ -1,0 +1,67 @@
+@rendermode InteractiveServer
+@page "/calculator"
+
+<h3>Kalkulator</h3>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <label for="num1">Liczba 1:</label>
+            <input type="number" @bind="num1" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label for="num2">Liczba 2:</label>
+            <input type="number" @bind="num2" class="form-control" />
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-md-12">
+            <button @onclick="AddNumbers" class="btn btn-primary">Dodaj (+)</button>
+            <button @onclick="SubtractNumbers" class="btn btn-secondary">Odejmij (-)</button>
+            <button @onclick="MultiplyNumbers" class="btn btn-success">Pomnóż (*)</button>
+            <button @onclick="DivideNumbers" class="btn btn-info">Podziel (/)</button>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-md-12">
+            <ResultDisplay Result="@finalResult" />
+        </div>
+    </div>
+</div>
+
+@code {
+    public double num1;
+    public double num2;
+    public string finalResult = "";
+
+    private void AddNumbers()
+    {   
+        finalResult = (num1 + num2).ToString();
+        StateHasChanged();
+    }
+
+    private void SubtractNumbers()
+    {
+        finalResult = (num1 - num2).ToString();
+        StateHasChanged();
+    }
+
+    private void MultiplyNumbers()
+    {
+        finalResult = (num1 * num2).ToString();
+        StateHasChanged();
+    }
+
+    private void DivideNumbers()
+    {
+        if (num2 != 0)
+        {
+            finalResult = (num1 / num2).ToString();
+        }
+        else
+        {
+            finalResult = "Nie można dzielić przez zero";
+        }
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,145 @@
+@page "/crypto"
+@using System.Net.Http
+@using System.Net.Http.Json
+@using System.Globalization
+@using ApiBlazor
+@rendermode InteractiveServer
+
+<h3>Najpopularniejsze kryptowaluty z CoinCap</h3>
+<button class="btn btn-outline-primary" @onclick="() =>ShowOnlyFav()">Pokaż tylko ulubione</button>
+@if (assets is null)
+{
+    <p>Ładowanie danych...</p>
+}
+else
+{   
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Logo</th>
+                    <th>Nazwa</th>
+                    <th>Symbol</th>
+                    <th>Cena (USD)</th>
+                    <th>Wolumen 24h (USD)</th>
+                    <th>Zysk/Strata</th>
+                    <th>Ulubione</th>
+                </tr>
+            </thead>
+        <tbody>
+@if(chek is true){
+    @foreach (var asset in favorite)
+{
+    
+    @if(ParseDecimal(asset.ChangePercent24Hr)>0){
+        color = "#B2FF66";
+    }
+    else{
+        color = "#FF3333";
+    }
+    <tr style="background-color:@color;">
+        <td>@asset.Rank</td>
+        <td>
+            <img src="@asset.IconUrl"
+            alt="@asset.Symbol"
+            width="32" height="32"
+            onerror="this.onerror=null;
+            this.src='sample-icon.png';" />
+        </td>
+        <td>@asset.Name</td>
+        <td>@asset.Symbol</td>
+        <td>@(ParseDecimal(asset.PriceUsd).ToString("N2"))</td>
+        <td>@(ParseDecimal(asset.VolumeUsd24Hr).ToString("N0"))</td>
+        <td>@(ParseDecimal(asset.ChangePercent24Hr).ToString("N1"))%</td>
+        <td><img height="32px" width="32px" src="@starfav" @onclick="() => AddorRemove(asset)" style="cursor:pointer"></td>
+    </tr>
+    
+}
+}
+else{
+@foreach (var asset in assets)
+{   
+var varImage = "starEmpty.png";
+
+    @if(asset.isFav is true){
+        varImage = "starFav.png";
+    }
+ 
+    @if(ParseDecimal(asset.ChangePercent24Hr)>0){
+        color = "#B2FF66";
+    }
+    else{
+        color = "#FF3333";
+    }
+    <tr style="background-color:@color;">
+        <td>@asset.Rank</td>
+        <td>
+            <img src="@asset.IconUrl"
+            alt="@asset.Symbol"
+            width="32" height="32"
+            onerror="this.onerror=null;
+            this.src='sample-icon.png';" />
+        </td>
+        <td>@asset.Name</td>
+        <td>@asset.Symbol</td>
+        <td>@(ParseDecimal(asset.PriceUsd).ToString("N2"))</td>
+        <td>@(ParseDecimal(asset.VolumeUsd24Hr).ToString("N0"))</td>
+        <td>@(ParseDecimal(asset.ChangePercent24Hr).ToString("N1"))%</td>
+        <td><img height="32px" width="32px" src=@varImage @onclick="() => AddorRemove(asset)" style="cursor:pointer"></td>
+    </tr>
+}
+}
+    </tbody>
+    </table>
+    </div>
+}
+@code {
+string ?color;
+string ?starfav = "starEmpty.png";
+bool chek = false;
+
+private List<CoinCapAsset>? assets;
+
+private List<CoinCapAsset>? favorite = [];
+private decimal ParseDecimal(string value)
+{
+    if (decimal.TryParse(value,NumberStyles.Any, CultureInfo.InvariantCulture,
+out var dec))
+    {
+        return dec;
+    }
+    return 0;
+
+}
+protected void ShowOnlyFav(){
+    if(chek is false){
+        chek = true;
+    }
+    else{
+        chek = false;
+    }
+    StateHasChanged();
+}
+protected void AddorRemove(CoinCapAsset ase){
+    if(ase.isFav is not true){
+        ase.isFav = true;
+        starfav = "starFav.png";
+        favorite.Add(ase);
+        }
+    else{
+            ase.isFav = false;
+            starfav = "starEmpty.png";
+            favorite.Remove(ase);
+        }
+    StateHasChanged();
+    
+}
+protected override async Task OnInitializedAsync()
+    {
+        var http = new HttpClient();
+        var url = "https://api.coincap.io/v2/assets?limit=50";
+        var response = await http.GetFromJsonAsync<ApiBlazor.CoinCapResponse>(url);
+        assets = response?.Data;
+    }
+}

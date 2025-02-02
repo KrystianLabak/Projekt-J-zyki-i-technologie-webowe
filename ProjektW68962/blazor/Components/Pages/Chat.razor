@@ -1,0 +1,69 @@
+@page "/chat"
+@rendermode InteractiveServer
+@using GroqApiLibrary;
+@using System.Text.Json.Nodes;
+
+<PageTitle>AI assistant</PageTitle>
+<h3>Chat</h3>
+
+@foreach (var message in messages)
+{
+    @if (message.IsUsersMessage)
+    {
+        <strong>User</strong>
+        <div class="alert alert-primary">@message.Message</div>
+    }
+    else{
+        <strong>Chat</strong>
+        <div class="alert alert-secondary">@message.Message</div>
+    }
+}
+
+<input class="form-control" placeholder="Tu wpisz wiadomość" @bind="newMessage" />
+<button class="btn btn-primary"type="button" @onclick="AskChat">Zapytaj</button>
+
+@code{
+  private List<ChatMessage> messages = new();
+
+  private string? newMessage;
+  private string? newPrompt;
+    private string? answer;
+
+  private static string apiKey = "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";
+  private GroqApiClient groqApi = new GroqApiClient(apiKey);
+
+  private async Task AskChat()
+  {
+    newPrompt = newMessage;
+    if(messages != null)
+    {
+        newPrompt = "Here is our conversation history: ";
+        foreach(var message in messages)
+        {
+            newPrompt += message.Message + " ";
+        }
+
+        newPrompt+= " Now i will send you a question. Answer for that question. " + newMessage;
+    }
+    var request = new JsonObject
+    {
+        ["model"] = "gemma2-9b-it",
+        ["messages"] = new JsonArray
+        {
+            new JsonObject
+            {
+                ["role"] = "user",
+                ["content"] = newPrompt
+            }
+        }
+    };
+
+    var result = await groqApi.CreateChatCompletionAsync(request);
+    answer = result?["choices"]?[0]?["message"]?["content"]?.ToString();
+
+    messages.Add(new ChatMessage {Message = newMessage, IsUsersMessage = true});
+    messages.Add(new ChatMessage {Message = answer, IsUsersMessage = false});
+    newMessage = String.Empty;
+    StateHasChanged();
+  }
+}
